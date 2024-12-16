@@ -7,6 +7,7 @@ import { verify } from './verify/verify';
 import { DoesntMeet } from './verify/meet';
 import { InARow } from './verify/inarow';
 import { Consecutive } from './verify/consecutive';
+import Playerstats from './PlayeStats';
 
 export default function Home() {
   const [table, setTable] = useState<string[][][]>([
@@ -87,6 +88,9 @@ export default function Home() {
           }
         </tbody>
       </table>
+      <hr />
+      <Playerstats table={table} />
+      <hr />
       {
         consecutives.length > 0 && <>
           {
