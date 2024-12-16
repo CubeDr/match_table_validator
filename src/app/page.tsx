@@ -68,7 +68,6 @@ export default function Home() {
                 {row.map((players, gameIndex) => (
                   <td
                     key={rowIndex + ' ' + gameIndex + ' td'}
-                    className={styles.Game}
                     draggable
                     onDragStart={(e) => handleDragStart(e, rowIndex, gameIndex)}
                     onDrop={(e) => handleDrop(e, rowIndex, gameIndex)}
@@ -110,6 +109,14 @@ export default function Home() {
             ))}
         </>
       }
+      <button onClick={() => {
+        navigator.clipboard.writeText(JSON.stringify(table));
+      }}>Copy</button>
+      <button onClick={() => {
+        const input = window.prompt('json');
+        if (input == null) return;
+        setTable(JSON.parse(input));
+      }}>Paste</button>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
+import styles from './Game.module.css';
 
 interface Props {
     players: string[];
@@ -23,12 +24,12 @@ export default function Game({ players, onPlayersUpdate }: Props) {
     }, [onPlayersUpdate]);
 
     return (
-        <>
+        <div className={styles.Game}>
             <input ref={player1Ref} value={players[0] ?? ''} onChange={onValueUpdate} />
             <input ref={player2Ref} value={players[1] ?? ''} onChange={onValueUpdate} />
             &nbsp;vs&nbsp;
             <input ref={player3Ref} value={players[2] ?? ''} onChange={onValueUpdate} />
             <input ref={player4Ref} value={players[3] ?? ''} onChange={onValueUpdate} />
-        </>
+        </div>
     );
 }
