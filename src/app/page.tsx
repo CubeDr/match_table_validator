@@ -5,6 +5,7 @@ import Game from './Game';
 import styles from './page.module.css';
 import { verify } from './verify/verify';
 import { DoesntMeet } from './verify/meet';
+import { InARow } from './verify/inarow';
 
 export default function Home() {
   const [table, setTable] = useState<string[][][]>([
@@ -17,11 +18,14 @@ export default function Home() {
   ]);
 
   const [doesntMeets, setDoesntMeets] = useState<DoesntMeet[]>([]);
+  const [inARows, setInARows] = useState<InARow[]>([]);
 
   useEffect(() => {
     const result = verify(table);
 
     setDoesntMeets(result.doesntMeets);
+    setInARows(result.inARows);
+    console.log(result.inARows);
   }, [table]);
 
   return (
@@ -36,7 +40,7 @@ export default function Home() {
         <tbody>
           {
             table.map((row, rowIndex) => (
-              <tr>
+              <tr className={inARows.map((inARow) => inARow.row).includes(row) ? styles.InARow : ''}>
                 {row.map((players, gameIndex) => (
                   <td className={styles.Game}>
                     <Game players={players} onPlayersUpdate={(newPlayers) => {
