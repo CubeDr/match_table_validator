@@ -1,0 +1,15 @@
+.Table {
+    text-align: center;
+    border-spacing: 14px;
+}
+
+.Game {
+    white-space: nowrap;
+}
+
+.Game input {
+    font-size: 24px;
+    text-align: center;
+    line-height: 36px;
+    width: 120px;
+}
