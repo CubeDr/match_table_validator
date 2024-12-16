@@ -113,7 +113,7 @@ export default function Home() {
           {doesntMeets.toSorted((a, b) => b.doesntMeet.length - a.doesntMeet.length)
             .map(({ player, doesntMeet }) => (
               <div key={'doesntMeets ' + player}>
-                {player} doesn't meet {doesntMeet.join(', ')}
+                {player} doesn&apos;t meet {doesntMeet.join(', ')}
               </div>
             ))}
         </>
