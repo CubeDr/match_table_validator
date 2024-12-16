@@ -89,16 +89,6 @@ export default function Home() {
         </tbody>
       </table>
       {
-        doesntMeets.length > 0 && <>
-          {doesntMeets.toSorted((a, b) => b.doesntMeet.length - a.doesntMeet.length)
-            .map(({ player, doesntMeet }) => (
-              <div key={'doesntMeets ' + player}>
-                {player} doesn't meet {doesntMeet.join(', ')}
-              </div>
-            ))}
-        </>
-      }
-      {
         consecutives.length > 0 && <>
           {
             consecutives.map(({ player, rowIndices }) => (
@@ -107,6 +97,17 @@ export default function Home() {
               </div>
             ))
           }
+        </>
+      }
+      <br />
+      {
+        doesntMeets.length > 0 && <>
+          {doesntMeets.toSorted((a, b) => b.doesntMeet.length - a.doesntMeet.length)
+            .map(({ player, doesntMeet }) => (
+              <div key={'doesntMeets ' + player}>
+                {player} doesn't meet {doesntMeet.join(', ')}
+              </div>
+            ))}
         </>
       }
     </div>
