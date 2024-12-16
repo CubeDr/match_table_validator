@@ -30,6 +30,28 @@ export default function Home() {
     setConsecutives(result.consecutives);
   }, [table]);
 
+  const handleDragStart = (e: React.DragEvent<HTMLTableDataCellElement>, rowIndex: number, gameIndex: number) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({ rowIndex, gameIndex }));
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLTableDataCellElement>, rowIndex: number, gameIndex: number) => {
+    e.preventDefault();
+    const source = JSON.parse(e.dataTransfer.getData('text/plain'));
+
+    console.log('handleDrop ', rowIndex, gameIndex, source);
+
+    setTable(prevTable => {
+      const newTable = JSON.parse(JSON.stringify(prevTable));
+      [newTable[source.rowIndex][source.gameIndex], newTable[rowIndex][gameIndex]] =
+        [prevTable[rowIndex][gameIndex], prevTable[source.rowIndex][source.gameIndex]];
+      return newTable;
+    });
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLTableDataCellElement>) => {
+    e.preventDefault();
+  };
+
   return (
     <div>
       <table className={styles.Table}>
@@ -44,7 +66,13 @@ export default function Home() {
             table.map((row, rowIndex) => (
               <tr key={rowIndex + ' tr'} className={inARows.map((inARow) => inARow.row).includes(row) ? styles.InARow : ''}>
                 {row.map((players, gameIndex) => (
-                  <td key={rowIndex + ' ' + gameIndex + ' td'} className={styles.Game}>
+                  <td
+                    key={rowIndex + ' ' + gameIndex + ' td'}
+                    className={styles.Game}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, rowIndex, gameIndex)}
+                    onDrop={(e) => handleDrop(e, rowIndex, gameIndex)}
+                    onDragOver={handleDragOver}>
                     <Game players={players} onPlayersUpdate={(newPlayers) => {
                       setTable(prevTable => {
                         const newTable = [...prevTable];
@@ -73,7 +101,7 @@ export default function Home() {
       {
         consecutives.length > 0 && <>
           {
-            consecutives.map(({player, rowIndices}) => (
+            consecutives.map(({ player, rowIndices }) => (
               <div key={'consecutive ' + player}>
                 {player} has consecutive games in row {rowIndices.join(', ')}
               </div>
