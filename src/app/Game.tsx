@@ -15,10 +15,10 @@ export default function Game({ players, onPlayersUpdate }: Props) {
 
     const onValueUpdate = useCallback(() => {
         onPlayersUpdate([
-            player1Ref.current!.value,
-            player2Ref.current!.value,
-            player3Ref.current!.value,
-            player4Ref.current!.value,
+            player1Ref.current!.value.trim(),
+            player2Ref.current!.value.trim(),
+            player3Ref.current!.value.trim(),
+            player4Ref.current!.value.trim(),
         ]);
     }, [onPlayersUpdate]);
 
