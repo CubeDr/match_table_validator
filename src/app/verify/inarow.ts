@@ -24,7 +24,6 @@ export function verifyNotInARow(table: string[][][]): InARow[] {
 function getInARow(table: string[][][], player: string): string[][] | null {
     for (const row of table) {
         const count = row.filter((game) => game.includes(player)).length;
-        console.log('player', player, 'count', count);
         if (count > 1) {
             return row;
         }

@@ -40,9 +40,9 @@ export default function Home() {
         <tbody>
           {
             table.map((row, rowIndex) => (
-              <tr className={inARows.map((inARow) => inARow.row).includes(row) ? styles.InARow : ''}>
+              <tr key={rowIndex + ' tr'} className={inARows.map((inARow) => inARow.row).includes(row) ? styles.InARow : ''}>
                 {row.map((players, gameIndex) => (
-                  <td className={styles.Game}>
+                  <td key={rowIndex + ' ' + gameIndex + ' td'} className={styles.Game}>
                     <Game players={players} onPlayersUpdate={(newPlayers) => {
                       setTable(prevTable => {
                         const newTable = [...prevTable];
