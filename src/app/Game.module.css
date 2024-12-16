@@ -8,3 +8,8 @@
     line-height: 36px;
     width: 120px;
 }
+
+.Highlight {
+    background-color: #4285f4;
+    color: white;
+}

@@ -6,9 +6,10 @@ import styles from './Game.module.css';
 interface Props {
     players: string[];
     onPlayersUpdate: (players: string[]) => void;
+    highlight: string;
 }
 
-export default function Game({ players, onPlayersUpdate }: Props) {
+export default function Game({ players, onPlayersUpdate, highlight }: Props) {
     const player1Ref = useRef<HTMLInputElement>(null);
     const player2Ref = useRef<HTMLInputElement>(null);
     const player3Ref = useRef<HTMLInputElement>(null);
@@ -25,11 +26,11 @@ export default function Game({ players, onPlayersUpdate }: Props) {
 
     return (
         <div className={styles.Game}>
-            <input ref={player1Ref} value={players[0] ?? ''} onChange={onValueUpdate} />
-            <input ref={player2Ref} value={players[1] ?? ''} onChange={onValueUpdate} />
+            <input ref={player1Ref} value={players[0] ?? ''} onChange={onValueUpdate} className={highlight && players[0] === highlight ? styles.Highlight : ''} />
+            <input ref={player2Ref} value={players[1] ?? ''} onChange={onValueUpdate} className={highlight && players[1] === highlight ? styles.Highlight : ''} />
             &nbsp;vs&nbsp;
-            <input ref={player3Ref} value={players[2] ?? ''} onChange={onValueUpdate} />
-            <input ref={player4Ref} value={players[3] ?? ''} onChange={onValueUpdate} />
+            <input ref={player3Ref} value={players[2] ?? ''} onChange={onValueUpdate} className={highlight && players[2] === highlight ? styles.Highlight : ''} />
+            <input ref={player4Ref} value={players[3] ?? ''} onChange={onValueUpdate} className={highlight && players[3] === highlight ? styles.Highlight : ''} />
         </div>
     );
 }

@@ -23,6 +23,8 @@ export default function Home() {
   const [inARows, setInARows] = useState<InARow[]>([]);
   const [consecutives, setConsecutives] = useState<Consecutive[]>([]);
 
+  const [highlight, setHighlight] = useState<string>('');
+
   useEffect(() => {
     const result = verify(table);
 
@@ -73,14 +75,17 @@ export default function Home() {
                     onDragStart={(e) => handleDragStart(e, rowIndex, gameIndex)}
                     onDrop={(e) => handleDrop(e, rowIndex, gameIndex)}
                     onDragOver={handleDragOver}>
-                    <Game players={players} onPlayersUpdate={(newPlayers) => {
-                      setTable(prevTable => {
-                        const newTable = [...prevTable];
-                        newTable[rowIndex] = [...newTable[rowIndex]];
-                        newTable[rowIndex][gameIndex] = newPlayers;
-                        return newTable;
-                      });
-                    }} />
+                    <Game
+                      players={players}
+                      onPlayersUpdate={(newPlayers) => {
+                        setTable(prevTable => {
+                          const newTable = [...prevTable];
+                          newTable[rowIndex] = [...newTable[rowIndex]];
+                          newTable[rowIndex][gameIndex] = newPlayers;
+                          return newTable;
+                        });
+                      }}
+                      highlight={highlight} />
                   </td>
                 ))}
               </tr>
@@ -89,7 +94,7 @@ export default function Home() {
         </tbody>
       </table>
       <hr />
-      <Playerstats table={table} />
+      <Playerstats table={table} highlight={highlight} setHighlight={setHighlight} />
       <hr />
       {
         consecutives.length > 0 && <>
