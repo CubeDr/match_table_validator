@@ -48,6 +48,9 @@ typedef std::vector<Player> Team;
 typedef std::vector<Player> Game;
 typedef std::vector<Game> Row;
 
+std::random_device rd;
+std::mt19937 gen(rd());
+
 void convert_teams(const emscripten::val &teams_val, std::vector<std::vector<Player>> &teams)
 {
     if (!teams_val.isArray())
@@ -137,7 +140,7 @@ int score_level_balance(const Game &game)
 int score_duplicate_player(const Game &game)
 {
     std::unordered_set<std::string> names;
-    for (const auto& player : game)
+    for (const auto &player : game)
     {
         names.insert(player.name);
     }
@@ -191,9 +194,6 @@ void print_games(const std::vector<Row> &games)
 
 void place_players_randomly(std::vector<Row> &games, const std::vector<Team> teams)
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
     std::vector<Player> players = flatten(teams);
 
     std::shuffle(players.begin(), players.end(), gen);
@@ -221,6 +221,63 @@ void place_players_randomly(std::vector<Row> &games, const std::vector<Team> tea
     }
 }
 
+Player &at(std::vector<Row> &games, int index)
+{
+    for (auto &row : games)
+    {
+        int playersInThisRow = row.size() * 4;
+        if (index >= playersInThisRow)
+        {
+            index -= playersInThisRow;
+            continue;
+        }
+
+        return row[index / 4][index % 4];
+    }
+    throw std::runtime_error("Invalid index passed to at().");
+}
+
+void swap(std::vector<Row> &games, int index1, int index2)
+{
+    Player &player1 = at(games, index1);
+    Player &player2 = at(games, index2);
+
+    Player temp = player1;
+    player1 = player2;
+    player2 = temp;
+}
+
+bool hill_climb_it(std::vector<Row> &games, int total_length)
+{
+    std::uniform_int_distribution<> distr(0, total_length - 1);
+    int index1 = distr(gen);
+    int index2 = distr(gen);
+
+    if (index1 == index2) return false;
+
+    int original_score = score_games(games);
+    swap(games, index1, index2);
+    int swapped_score = score_games(games);
+
+    if (swapped_score >= original_score)
+    {
+        swap(games, index1, index2);
+        std::cout << "Climb failed." << std::endl;
+        return false;
+    }
+
+    std::cout << "Climb success." << std::endl;
+    return true;
+}
+
+void hill_climb(std::vector<Row> &games, int total_length, int max_iterations = 100)
+{
+    for (int iteration = 0; iteration < max_iterations; ++iteration)
+    {
+        hill_climb_it(games, total_length);
+    }
+}
+
 std::vector<Row> generate_matches(const std::vector<Team> teams, int num_courts, int num_games)
 {
     std::vector<Row> games;
@@ -229,6 +286,8 @@ std::vector<Row> generate_matches(const std::vector<Team> teams, int num_courts,
     place_players_randomly(games, teams);
     std::cout << "Initial random placement:" << std::endl;
     print_games(games);
+
+    hill_climb(games, num_courts * num_games * 4, 100);
 
     return games;
 }
@@ -259,7 +318,8 @@ std::string generate_matches_val(
         return "{ \"status\": \"error\", \"message\": \"C++ data processing failed (unknown exception)\" }";
     }
 
-    generate_matches(teams, num_courts, num_games);
+    std::vector<Row> games = generate_matches(teams, num_courts, num_games);
+    print_games(games);
 
     return "success";
 }
