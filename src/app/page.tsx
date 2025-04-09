@@ -8,8 +8,12 @@ import { DoesntMeet } from './verify/meet';
 import { InARow } from './verify/inarow';
 import { Consecutive } from './verify/consecutive';
 import Playerstats from './PlayeStats';
+import ControlRow from './ControlRow';
 
 export default function Home() {
+  const [courts, setCourts] = useState(2);
+  const [rows, setRows] = useState(6);
+
   const [table, setTable] = useState<string[][][]>([
     [['', '', '', ''], ['', '', '', '']],
     [['', '', '', ''], ['', '', '', '']],
@@ -24,6 +28,27 @@ export default function Home() {
   const [consecutives, setConsecutives] = useState<Consecutive[]>([]);
 
   const [highlight, setHighlight] = useState<string>('');
+
+  useEffect(() => {
+    if (table.length === rows && table[0].length === courts) {
+      return;
+    }
+
+    const newTable = table.slice(0, rows);
+    while (newTable.length < rows) {
+      newTable.push([]);
+    }
+
+    for (const rows of newTable) {
+      while (rows.length > courts) {
+        rows.pop();
+      }
+      while (rows.length < courts) {
+        rows.push(['', '', '', '']);
+      }
+    }
+    setTable(newTable);
+  }, [courts, rows, table]);
 
   useEffect(() => {
     const result = verify(table);
@@ -57,6 +82,10 @@ export default function Home() {
 
   return (
     <div>
+      <ControlRow courts={courts} rows={rows} onUpdate={(courts, rows) => {
+        setCourts(courts);
+        setRows(rows);
+      }} />
       <table className={styles.Table}>
         <thead>
           <tr>

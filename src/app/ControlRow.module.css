@@ -1,0 +1,13 @@
+.ControlRow {
+    margin: 18px;
+}
+
+.Input {
+    width: 40px;
+    margin-right: 24px;
+}
+
+.ApplyButton {
+    cursor: pointer;
+    padding: 0 4px;
+}
