@@ -86,41 +86,43 @@ export default function Home() {
         setCourts(courts);
         setRows(rows);
       }} />
-      <table className={styles.Table}>
-        <thead>
-          <tr>
-            {new Array(courts).fill(1).map((_, i) => <td>Court {i+1}</td>)}
-          </tr>
-        </thead>
-        <tbody>
-          {
-            table.map((row, rowIndex) => (
-              <tr key={rowIndex + ' tr'} className={inARows.map((inARow) => inARow.row).includes(row) ? styles.InARow : ''}>
-                {row.map((players, gameIndex) => (
-                  <td
-                    key={rowIndex + ' ' + gameIndex + ' td'}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, rowIndex, gameIndex)}
-                    onDrop={(e) => handleDrop(e, rowIndex, gameIndex)}
-                    onDragOver={handleDragOver}>
-                    <Game
-                      players={players}
-                      onPlayersUpdate={(newPlayers) => {
-                        setTable(prevTable => {
-                          const newTable = [...prevTable];
-                          newTable[rowIndex] = [...newTable[rowIndex]];
-                          newTable[rowIndex][gameIndex] = newPlayers;
-                          return newTable;
-                        });
-                      }}
-                      highlight={highlight} />
-                  </td>
-                ))}
-              </tr>
-            ))
-          }
-        </tbody>
-      </table>
+      <div className={styles.TableWrapper}>
+        <table className={styles.Table}>
+          <thead>
+            <tr>
+              {new Array(courts).fill(1).map((_, i) => <td>Court {i+1}</td>)}
+            </tr>
+          </thead>
+          <tbody>
+            {
+              table.map((row, rowIndex) => (
+                <tr key={rowIndex + ' tr'} className={inARows.map((inARow) => inARow.row).includes(row) ? styles.InARow : ''}>
+                  {row.map((players, gameIndex) => (
+                    <td
+                      key={rowIndex + ' ' + gameIndex + ' td'}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, rowIndex, gameIndex)}
+                      onDrop={(e) => handleDrop(e, rowIndex, gameIndex)}
+                      onDragOver={handleDragOver}>
+                      <Game
+                        players={players}
+                        onPlayersUpdate={(newPlayers) => {
+                          setTable(prevTable => {
+                            const newTable = [...prevTable];
+                            newTable[rowIndex] = [...newTable[rowIndex]];
+                            newTable[rowIndex][gameIndex] = newPlayers;
+                            return newTable;
+                          });
+                        }}
+                        highlight={highlight} />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
       <hr />
       <Playerstats table={table} highlight={highlight} setHighlight={setHighlight} />
       <hr />

@@ -1,3 +1,7 @@
+.TableWrapper {
+    overflow-x: auto;
+}
+
 .Table {
     text-align: center;
     border-spacing: 14px;
