@@ -26,9 +26,21 @@ export default function AutoPage() {
         setPlayers(newPlayers);
     }
 
+    function copy() {
+        navigator.clipboard.writeText(JSON.stringify(players))
+    }
+
+    function paste() {
+        const input = window.prompt('json');
+        if (input == null) return;
+        setPlayers(JSON.parse(input));
+    }
+
     return (
         <div className={styles.Page}>
             <h1>Auto Match Generator</h1>
+            <button className={styles.Control} onClick={copy}>Copy</button>
+            <button className={styles.Control} onClick={paste}>Paste</button>
             <div className={styles.TeamsSection}>
                 {players.map((team, teamIndex) =>
                     <div className={styles.PlayersSection} key={'PlayersSection' + teamIndex}>
