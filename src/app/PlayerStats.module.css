@@ -1,4 +1,7 @@
 .Player {
+    cursor: pointer;
+    display: inline-block;
+    margin: 4px 8px;
     padding: 8px;
 }
 
