@@ -38,6 +38,7 @@ struct Player
     std::string name;
     int level;
     Gender gender;
+    int group_id;
 
     friend std::ostream &operator<<(std::ostream &os, const Player &player)
     {
@@ -93,6 +94,7 @@ void convert_teams(const emscripten::val &teams_val, std::vector<std::vector<Pla
             Player p;
             p.name = player_val["name"].as<std::string>();
             p.level = player_val["level"].as<int>();
+            p.group_id = i;
 
             if (!player_val["gender"].isUndefined())
             {
@@ -162,11 +164,37 @@ int score_duplicate_player(const std::vector<Player> &players)
     return 0;
 }
 
+int score_group_mixing(const Game &game)
+{
+    int penalty = 0;
+
+    std::unordered_map<int, int> groupCounts;
+    for (const auto &player : game)
+    {
+        groupCounts[player.group_id]++;
+    }
+
+    for (const auto &pair : groupCounts)
+    {
+        int count = pair.second;
+        if (count == 4)
+        {
+            penalty += 1000;
+        }
+        else if (count == 3)
+        {
+            penalty += 200;
+        }
+    }
+    return penalty;
+}
+
 int score_game(const Game &game)
 {
     int balance_score = score_level_balance(game);
     int duplicate_player_score = score_duplicate_player(game);
-    return balance_score + duplicate_player_score;
+    int group_mixing_penalty = score_group_mixing(game);
+    return balance_score + duplicate_player_score + group_mixing_penalty;
 }
 
 int score_rows(const Row &row)
