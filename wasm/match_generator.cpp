@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
 #include <algorithm>
 #include <unordered_set>
 #include <random>
@@ -284,6 +285,7 @@ bool hill_climb_it(std::vector<Row> &games, int total_length)
         return false;
     }
 
+    std::cout << "Climbing to the next best game: " << best_score << std::endl;
     swap(games, best_index1, best_index2);
     return true;
 }
@@ -309,12 +311,59 @@ std::vector<Row> generate_matches(const std::vector<Team> teams, int num_courts,
     prepare_matches(games, num_courts, num_games);
 
     place_players_randomly(games, teams);
-    std::cout << "Initial random placement:" << std::endl;
-    print_games(games);
+    std::cout << "Initial score: " << score_games(games) << std::endl;
 
     hill_climb(games, num_courts * num_games * 4, 100);
 
     return games;
+}
+
+std::string to_string(const std::vector<Row> &games)
+{
+    std::ostringstream oss;
+
+    oss << '[';
+
+    for (size_t i = 0; i < games.size(); ++i)
+    {
+        const Row &row = games[i];
+        if (i > 0)
+        {
+            oss << ',';
+        }
+
+        oss << '[';
+
+        for (size_t j = 0; j < row.size(); ++j)
+        {
+            const Game &game = row[j];
+            if (j > 0)
+            {
+                oss << ',';
+            }
+
+            oss << '[';
+
+            for (size_t k = 0; k < game.size(); ++k)
+            {
+                const Player &player = game[k];
+                if (k > 0)
+                {
+                    oss << ',';
+                }
+
+                oss << '"' << player.name << '"';
+            }
+
+            oss << ']';
+        }
+
+        oss << ']';
+    }
+
+    oss << ']';
+
+    return oss.str();
 }
 
 std::string generate_matches_val(
@@ -344,9 +393,9 @@ std::string generate_matches_val(
     }
 
     std::vector<Row> games = generate_matches(teams, num_courts, num_games);
-    print_games(games);
+    std::cout << "Final Score: " << score_games(games) << std::endl;
 
-    return "success";
+    return to_string(games);
 }
 
 EMSCRIPTEN_BINDINGS(match_generator_module)

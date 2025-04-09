@@ -95,15 +95,7 @@ export default function AutoPage() {
             setError(null);
             setGenerationResult(null);
 
-            console.log("--- DEBUG: Calling Wasm generateMatches (val version) ---");
-            console.log("Value of players (JSON):", JSON.stringify(players, null, 2));
-            console.log("Value of courts:", courts);
-            console.log("Value of games:", games);
-            console.log("-------------------------------------------------------");
-
-            // Call the function bound to generate_matches_val
-            // Pass the original JS array directly
-            const result = wasmModule.generateMatches(players, courts, games);
+            const result = JSON.parse(wasmModule.generateMatches(players, courts, games));
 
             console.log("Result from Wasm:", result);
             setGenerationResult(result);
