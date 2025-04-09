@@ -13,17 +13,19 @@ enum class Gender
     FEMALE = 1
 };
 
-std::ostream& operator<<(std::ostream& os, Gender gender) {
-    switch (gender) {
-        case Gender::MALE:
-            os << "Male";
-            break;
-        case Gender::FEMALE:
-            os << "Female";
-            break;
-        default:
-            os << "Unknown";
-            break;
+std::ostream &operator<<(std::ostream &os, Gender gender)
+{
+    switch (gender)
+    {
+    case Gender::MALE:
+        os << "Male";
+        break;
+    case Gender::FEMALE:
+        os << "Female";
+        break;
+    default:
+        os << "Unknown";
+        break;
     }
     return os;
 }
@@ -124,31 +126,86 @@ std::vector<T> flatten(std::vector<std::vector<T>> vector)
     return result;
 }
 
-void generate_random_games(std::vector<Row> &games, const std::vector<Team> teams)
+int score_game(const Game &game)
+{
+    return 0;
+}
+
+int score_games(const std::vector<Row> &games)
+{
+    int score = 0;
+
+    for (const auto &row : games)
+    {
+        for (const auto &game : row)
+        {
+            score += score_game(game);
+        }
+    }
+
+    return score;
+}
+
+void print_games(const std::vector<Row> &games)
+{
+    std::cout << "< score: " << score_games(games) << " >" << std::endl;
+    for (const auto &row : games)
+    {
+        std::cout << "[ ";
+        for (const auto &game : row)
+        {
+            std::cout << "[ ";
+            for (const auto &player : game)
+            {
+                std::cout << player << " ";
+            }
+            std::cout << "] ";
+        }
+        std::cout << "]" << std::endl;
+    }
+}
+
+void place_players_randomly(std::vector<Row> &games, const std::vector<Team> teams)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
 
     std::vector<Player> players = flatten(teams);
 
-    for (const auto& player : players) {
-        std::cout << player << ", ";
-    }
-    std::cout << std::endl;
-
     std::shuffle(players.begin(), players.end(), gen);
 
-    for (const auto& player : players) {
-        std::cout << player << ", ";
+    int playerIndex = 0;
+    for (int rowIndex = 0; rowIndex < games.size(); ++rowIndex)
+    {
+        Row &row = games[rowIndex];
+        for (int gameIndex = 0; gameIndex < row.size(); ++gameIndex)
+        {
+            Game &game = row[gameIndex];
+            game.clear();
+            game.reserve(4);
+            for (int i = 0; i < 4; i++)
+            {
+                game.push_back(players[playerIndex++]);
+
+                if (playerIndex == players.size())
+                {
+                    std::shuffle(players.begin(), players.end(), gen);
+                    playerIndex = 0;
+                }
+            }
+        }
     }
-    std::cout << std::endl;
 }
 
 std::vector<Row> generate_matches(const std::vector<Team> teams, int num_courts, int num_games)
 {
     std::vector<Row> games;
     prepare_matches(games, num_courts, num_games);
-    generate_random_games(games, teams);
+
+    place_players_randomly(games, teams);
+    std::cout << "Initial random placement:" << std::endl;
+    print_games(games);
+
     return games;
 }
 
