@@ -89,8 +89,7 @@ export default function Home() {
       <table className={styles.Table}>
         <thead>
           <tr>
-            <td>1코트</td>
-            <td>2코트</td>
+            {new Array(courts).fill(1).map((_, i) => <td>Court {i+1}</td>)}
           </tr>
         </thead>
         <tbody>
