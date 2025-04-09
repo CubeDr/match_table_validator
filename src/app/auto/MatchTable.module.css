@@ -10,6 +10,7 @@
 
 .TableCell {
     border-bottom: 2px solid var(--divider);
+    cursor: pointer;
     padding: 8px 12px;
     text-align: left;
     vertical-align: top;
@@ -23,4 +24,9 @@
 
 .StrongBorderRight {
     border-right: 3px solid var(--divider);
+}
+
+.Hovered {
+    background-color: blue;
+    font-weight: bold;
 }
