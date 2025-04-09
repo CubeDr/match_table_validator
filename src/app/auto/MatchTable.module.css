@@ -1,0 +1,26 @@
+.TableWrapper {
+    overflow-x: auto;
+}
+
+.Table {
+    border-collapse: collapse;
+    border: 2px solid var(--divider);
+    margin: 32px 0 14px;
+}
+
+.TableCell {
+    border-bottom: 2px solid var(--divider);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+    min-width: 80px;
+    text-align: center;
+}
+
+.DashedBorderRight {
+    border-right: 1px dashed var(--divider-weak);
+}
+
+.StrongBorderRight {
+    border-right: 3px solid var(--divider);
+}

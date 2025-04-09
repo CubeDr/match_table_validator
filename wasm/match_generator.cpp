@@ -294,11 +294,7 @@ void hill_climb(std::vector<Row> &games, int total_length, int max_iterations)
 {
     for (int iteration = 0; iteration < max_iterations; ++iteration)
     {
-        if (hill_climb_it(games, total_length))
-        {
-            std::cout << "Climb success at: " << iteration << std::endl;
-        }
-        else
+        if (!hill_climb_it(games, total_length))
         {
             break;
         }
@@ -395,7 +391,8 @@ std::string generate_matches_val(
     std::vector<Row> games = generate_matches(teams, num_courts, num_games);
     std::cout << "Final Score: " << score_games(games) << std::endl;
 
-    return to_string(games);
+    std::string games_json = to_string(games);
+    return "{ \"status\": \"success\", \"result\": " + games_json + " }";
 }
 
 EMSCRIPTEN_BINDINGS(match_generator_module)
