@@ -137,16 +137,16 @@ int score_level_balance(const Game &game)
     return abs(team1Level - team2Level);
 }
 
-int score_duplicate_player(const Game &game)
+int score_duplicate_player(const std::vector<Player> &players)
 {
     std::unordered_set<std::string> names;
-    for (const auto &player : game)
+    for (const auto &player : players)
     {
         names.insert(player.name);
     }
-    if (names.size() != 4)
+    if (names.size() != players.size())
     {
-        return 100000;
+        return 100000 * (players.size() - names.size());
     }
     return 0;
 }
@@ -158,12 +158,19 @@ int score_game(const Game &game)
     return balance_score + duplicate_player_score;
 }
 
+int score_rows(const Row &row)
+{
+    int duplicate_player_score = score_duplicate_player(flatten(row)) * 10;
+    return duplicate_player_score;
+}
+
 int score_games(const std::vector<Row> &games)
 {
     int score = 0;
 
     for (const auto &row : games)
     {
+        score += score_rows(row);
         for (const auto &game : row)
         {
             score += score_game(game);
@@ -249,32 +256,50 @@ void swap(std::vector<Row> &games, int index1, int index2)
 
 bool hill_climb_it(std::vector<Row> &games, int total_length)
 {
-    std::uniform_int_distribution<> distr(0, total_length - 1);
-    int index1 = distr(gen);
-    int index2 = distr(gen);
-
-    if (index1 == index2) return false;
-
     int original_score = score_games(games);
-    swap(games, index1, index2);
-    int swapped_score = score_games(games);
+    int best_score = original_score;
+    int best_index1 = 0;
+    int best_index2 = 0;
 
-    if (swapped_score >= original_score)
+    for (int index1 = 0; index1 < total_length; ++index1)
     {
-        swap(games, index1, index2);
-        std::cout << "Climb failed." << std::endl;
+        for (int index2 = index1 + 1; index2 < total_length; ++index2)
+        {
+            swap(games, index1, index2);
+
+            int swapped_score = score_games(games);
+            if (swapped_score < best_score)
+            {
+                best_score = swapped_score;
+                best_index1 = index1;
+                best_index2 = index2;
+            }
+
+            swap(games, index1, index2);
+        }
+    }
+
+    if (best_score == original_score)
+    {
         return false;
     }
 
-    std::cout << "Climb success." << std::endl;
+    swap(games, best_index1, best_index2);
     return true;
 }
 
-void hill_climb(std::vector<Row> &games, int total_length, int max_iterations = 100)
+void hill_climb(std::vector<Row> &games, int total_length, int max_iterations)
 {
     for (int iteration = 0; iteration < max_iterations; ++iteration)
     {
-        hill_climb_it(games, total_length);
+        if (hill_climb_it(games, total_length))
+        {
+            std::cout << "Climb success at: " << iteration << std::endl;
+        }
+        else
+        {
+            break;
+        }
     }
 }
 
