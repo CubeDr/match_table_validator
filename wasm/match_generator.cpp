@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <unordered_set>
 #include <random>
 #include <stdexcept> // For std::runtime_error
 #include <emscripten/bind.h>
@@ -126,9 +127,32 @@ std::vector<T> flatten(std::vector<std::vector<T>> vector)
     return result;
 }
 
+int score_level_balance(const Game &game)
+{
+    int team1Level = game[0].level + game[1].level;
+    int team2Level = game[2].level + game[3].level;
+    return abs(team1Level - team2Level);
+}
+
+int score_duplicate_player(const Game &game)
+{
+    std::unordered_set<std::string> names;
+    for (const auto& player : game)
+    {
+        names.insert(player.name);
+    }
+    if (names.size() != 4)
+    {
+        return 100000;
+    }
+    return 0;
+}
+
 int score_game(const Game &game)
 {
-    return 0;
+    int balance_score = score_level_balance(game);
+    int duplicate_player_score = score_duplicate_player(game);
+    return balance_score + duplicate_player_score;
 }
 
 int score_games(const std::vector<Row> &games)
