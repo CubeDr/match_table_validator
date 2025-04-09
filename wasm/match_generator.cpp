@@ -359,7 +359,7 @@ void swap(std::vector<Row> &games, int index1, int index2)
     player2 = temp;
 }
 
-bool hill_climb_it(std::vector<Row> &games, int total_length)
+bool hill_climb_best_among_all(std::vector<Row> &games, int total_length)
 {
     int original_score = score_games(games);
     int best_score = original_score;
@@ -394,11 +394,47 @@ bool hill_climb_it(std::vector<Row> &games, int total_length)
     return true;
 }
 
+bool hill_climb_best_among_random(std::vector<Row> &games, int total_length, int iterations)
+{
+    int original_score = score_games(games);
+    int best_score = original_score;
+    int best_index1 = 0;
+    int best_index2 = 0;
+
+    std::uniform_int_distribution<> distr(0, total_length - 1);
+    for (int i = 0; i < iterations; ++i)
+    {
+        int index1 = distr(gen);
+        int index2 = distr(gen);
+
+        swap(games, index1, index2);
+
+        int swapped_score = score_games(games);
+        if (swapped_score < best_score)
+        {
+            best_score = swapped_score;
+            best_index1 = index1;
+            best_index2 = index2;
+        }
+
+        swap(games, index1, index2);
+    }
+
+    if (best_score == original_score)
+    {
+        return false;
+    }
+
+    std::cout << "Climbing to the next best game: " << best_score << std::endl;
+    swap(games, best_index1, best_index2);
+    return true;
+}
+
 void hill_climb(std::vector<Row> &games, int total_length, int max_iterations)
 {
     for (int iteration = 0; iteration < max_iterations; ++iteration)
     {
-        if (!hill_climb_it(games, total_length))
+        if (!hill_climb_best_among_random(games, total_length, 10000))
         {
             break;
         }
@@ -413,7 +449,7 @@ std::vector<Row> generate_matches(const std::vector<Team> teams, int num_courts,
     place_players_randomly(games, teams);
     std::cout << "Initial score: " << score_games(games) << std::endl;
 
-    hill_climb(games, num_courts * num_games * 4, 100);
+    hill_climb(games, num_courts * num_games * 4, 60);
 
     return games;
 }
