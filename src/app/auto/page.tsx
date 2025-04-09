@@ -84,7 +84,11 @@ export default function AutoPage() {
         }
 
         try {
+            const startedAt = Date.now();
             const result = JSON.parse(wasmModule.generateMatches(players, courts, games));
+            const elapsed = Date.now() - startedAt;
+            console.log('Took ' + (elapsed / 1000) + 's.');
+
             if (result.status == 'success') {
                 setTables((tables) => [...tables, result.result]);
             } else {
