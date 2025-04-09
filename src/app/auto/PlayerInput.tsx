@@ -2,6 +2,8 @@ import React from 'react';
 import { Player, Gender } from './player';
 import styles from './PlayerInputs.module.css';
 
+const MAX_LEVEL = 20;
+
 interface Props {
     player: Player;
     onPlayerUpdate: (player: Player) => void;
@@ -16,7 +18,7 @@ export default function PlayerInput({ player, onPlayerUpdate }: Props) {
 
     const handleLevelChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newLevel = parseInt(event.target.value, 10) || 0;
-        const clampedLevel = Math.max(1, Math.min(10, newLevel));
+        const clampedLevel = Math.max(1, Math.min(MAX_LEVEL, newLevel));
 
         if (!isNaN(newLevel)) {
             const updatedPlayer = { ...player, level: clampedLevel };
