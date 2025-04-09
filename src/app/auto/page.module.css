@@ -1,3 +1,11 @@
 .Page {
     margin: 14px;
 }
+
+.TeamsSection {
+    display: flex;
+}
+
+.PlayersSection {
+    margin-right: 14px;
+}

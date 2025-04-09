@@ -2,7 +2,15 @@
     margin: 8px 0;
 }
 
-.PlayerInput input, .PlayerInput select {
+.NameInput, .LevelInput, .GenderInput {
     font-size: 16px;
-    margin: 0 2px;
+    margin-right: 4px;
+}
+
+.NameInput {
+    width: 100px;
+}
+
+.LevelInput {
+    width: 40px;
 }

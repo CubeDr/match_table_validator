@@ -44,6 +44,7 @@ export default function PlayerInput({ player, onPlayerUpdate }: Props) {
                 value={player.name}
                 onChange={handleNameChange}
                 placeholder="Name"
+                className={styles.NameInput}
             />
             <input
                 type="number"
@@ -51,10 +52,12 @@ export default function PlayerInput({ player, onPlayerUpdate }: Props) {
                 onChange={handleLevelChange}
                 min="1"
                 max="10"
+                className={styles.LevelInput}
             />
             <select
                 value={Gender[player.gender]}
                 onChange={handleGenderChange}
+                className={styles.GenderInput}
             >
                 {Object.keys(Gender).filter(key => isNaN(Number(key))).map((genderKey) => (
                     <option key={genderKey} value={genderKey}>
