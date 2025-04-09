@@ -7,6 +7,8 @@ import PlayerInput from './PlayerInput';
 
 export default function AutoPage() {
     const [players, setPlayers] = useState<Player[][]>([[{ name: '', level: 1, gender: Gender.MALE }]]);
+    const [courts, setCourts] = useState(2);
+    const [games, setGames] = useState(4);
 
     function addPlayer(teamIndex: number) {
         const newPlayers = Array.from(players);
@@ -55,6 +57,22 @@ export default function AutoPage() {
                     </div>
                 )}
                 {players.length === 1 && <button onClick={() => addTeam()}>Add Team</button>}
+            </div>
+            <hr />
+            <div className={styles.GameSettings}>
+                <label>Number of courts: </label>
+                <input
+                    className={styles.GameSettingsInput}
+                    type='number'
+                    value={courts}
+                    onChange={(e) => setCourts(Number(e.target.value))} />
+                <label>Number of games: </label>
+                <input
+                    className={styles.GameSettingsInput}
+                    type='number'
+                    value={games}
+                    onChange={(e) => setGames(Number(e.target.value))} />
+                <button className={styles.GenerateButton}>Generate</button>
             </div>
         </div>
     );

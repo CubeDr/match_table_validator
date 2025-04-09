@@ -2,14 +2,29 @@
     margin: 14px;
 }
 
+.Control {
+    margin-right: 8px;
+}
+
 .TeamsSection {
     display: flex;
+    margin-bottom: 24px;
 }
 
 .PlayersSection {
     margin-right: 14px;
 }
 
-.Control {
-    margin-right: 8px;
+.GameSettings {
+    margin-top: 8px;
+}
+
+.GameSettingsInput {
+    width: 40px;
+    margin-right: 14px;
+}
+
+.GenerateButton {
+    cursor: pointer;
+    padding: 4px 8px;
 }
