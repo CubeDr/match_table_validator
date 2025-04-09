@@ -4,6 +4,7 @@
 #include <sstream>
 #include <algorithm>
 #include <unordered_set>
+#include <unordered_map>
 #include <random>
 #include <stdexcept> // For std::runtime_error
 #include <emscripten/bind.h>
@@ -48,6 +49,13 @@ struct Player
 typedef std::vector<Player> Team;
 typedef std::vector<Player> Game;
 typedef std::vector<Game> Row;
+
+struct PlayerGameStats
+{
+    int with_weak_count;
+    int with_similar_count;
+    int with_strong_count;
+};
 
 std::random_device rd;
 std::mt19937 gen(rd());
@@ -135,7 +143,7 @@ int score_level_balance(const Game &game)
 {
     int team1Level = game[0].level + game[1].level;
     int team2Level = game[2].level + game[3].level;
-    return abs(team1Level - team2Level);
+    return abs(team1Level - team2Level) * 20;
 }
 
 int score_duplicate_player(const std::vector<Player> &players)
@@ -165,6 +173,64 @@ int score_rows(const Row &row)
     return duplicate_player_score;
 }
 
+float get_average_level(const Game &game)
+{
+    float average_level = 0;
+    for (const auto &player : game)
+    {
+        average_level += player.level;
+    }
+    average_level /= 4;
+    return average_level;
+}
+
+const float COMPETE_LEVEL_THRESHOLD = 2;
+
+int score_players(const std::vector<Row> &games)
+{
+    std::unordered_map<std::string, PlayerGameStats> stats;
+
+    for (const auto &row : games)
+    {
+        for (const auto &game : row)
+        {
+            float average_level = get_average_level(game);
+            for (const auto &player : game)
+            {
+                if (stats.find(player.name) == stats.end())
+                {
+                    stats.insert({player.name, {0, 0, 0}});
+                }
+
+                auto &player_stats = stats[player.name];
+                if (std::abs(player.level - average_level) <= COMPETE_LEVEL_THRESHOLD)
+                {
+                    player_stats.with_similar_count++;
+                }
+                else if (player.level < average_level)
+                {
+                    player_stats.with_strong_count++;
+                }
+                else
+                {
+                    player_stats.with_weak_count++;
+                }
+            }
+        }
+    }
+
+    int score = 0;
+
+    for (const auto &it : stats)
+    {
+        const auto &stat = it.second;
+        score += pow(2, stat.with_strong_count);
+        score += pow(3, stat.with_weak_count);
+    }
+
+    return score;
+}
+
 int score_games(const std::vector<Row> &games)
 {
     int score = 0;
@@ -177,6 +243,8 @@ int score_games(const std::vector<Row> &games)
             score += score_game(game);
         }
     }
+
+    score += score_players(games);
 
     return score;
 }
