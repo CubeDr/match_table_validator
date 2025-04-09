@@ -50,12 +50,12 @@ struct Player
 typedef std::vector<Player> Team;
 typedef std::vector<Player> Game;
 typedef std::vector<Game> Row;
+typedef unsigned long long score_t;
 
 struct PlayerGameStats
 {
-    int with_weak_count;
-    int with_similar_count;
-    int with_strong_count;
+    int with_weak_multiplier;
+    int with_strong_multiplier;
     std::unordered_map<std::string, int> partner_count;
     std::unordered_map<std::string, int> players_in_same_game_count;
 };
@@ -143,14 +143,14 @@ std::vector<T> flatten(std::vector<std::vector<T>> vector)
     return result;
 }
 
-int score_level_balance(const Game &game)
+score_t score_level_balance(const Game &game)
 {
     int team1Level = game[0].level + game[1].level;
     int team2Level = game[2].level + game[3].level;
-    return abs(team1Level - team2Level) * 20;
+    return std::abs(team1Level - team2Level) * 20ull;
 }
 
-int score_duplicate_player(const std::vector<Player> &players)
+score_t score_duplicate_player(const std::vector<Player> &players)
 {
     std::unordered_set<std::string> names;
     for (const auto &player : players)
@@ -159,14 +159,14 @@ int score_duplicate_player(const std::vector<Player> &players)
     }
     if (names.size() != players.size())
     {
-        return 100000 * (players.size() - names.size());
+        return 100000000000000ull * (players.size() - names.size());
     }
     return 0;
 }
 
-int score_group_mixing(const Game &game)
+score_t score_group_mixing(const Game &game)
 {
-    int penalty = 0;
+    score_t penalty = 0;
 
     std::unordered_map<int, int> groupCounts;
     for (const auto &player : game)
@@ -189,17 +189,17 @@ int score_group_mixing(const Game &game)
     return penalty;
 }
 
-int score_game(const Game &game)
+score_t score_game(const Game &game)
 {
-    int balance_score = score_level_balance(game);
-    int duplicate_player_score = score_duplicate_player(game);
-    int group_mixing_penalty = score_group_mixing(game);
+    score_t balance_score = score_level_balance(game);
+    score_t duplicate_player_score = score_duplicate_player(game);
+    score_t group_mixing_penalty = score_group_mixing(game);
     return balance_score + duplicate_player_score + group_mixing_penalty;
 }
 
-int score_rows(const Row &row)
+score_t score_rows(const Row &row)
 {
-    int duplicate_player_score = score_duplicate_player(flatten(row)) * 10;
+    score_t duplicate_player_score = score_duplicate_player(flatten(row));
     return duplicate_player_score;
 }
 
@@ -216,7 +216,7 @@ float get_average_level(const Game &game)
 
 const float COMPETE_LEVEL_THRESHOLD = 2;
 
-int score_players(const std::vector<Row> &games)
+score_t score_players(const std::vector<Row> &games)
 {
     std::unordered_map<std::string, PlayerGameStats> stats;
 
@@ -230,22 +230,22 @@ int score_players(const std::vector<Row> &games)
                 const auto &player = game[i];
                 if (stats.find(player.name) == stats.end())
                 {
-                    stats.insert({player.name, {0, 0, 0, {}}});
+                    stats.insert({player.name, {0, 0, {}}});
                 }
                 auto &player_stats = stats[player.name];
 
                 // Score game level difficulty.
                 if (std::abs(player.level - average_level) <= COMPETE_LEVEL_THRESHOLD)
                 {
-                    player_stats.with_similar_count++;
+                    // Competing game
                 }
                 else if (player.level < average_level)
                 {
-                    player_stats.with_strong_count++;
+                    player_stats.with_strong_multiplier++;
                 }
                 else
                 {
-                    player_stats.with_weak_count++;
+                    player_stats.with_weak_multiplier += round(player.level - average_level);
                 }
 
                 // Score duplicate partners.
@@ -274,13 +274,13 @@ int score_players(const std::vector<Row> &games)
         }
     }
 
-    int score = 0;
+    score_t score = 0;
 
     for (const auto &it : stats)
     {
         const auto &stat = it.second;
-        score += pow(1.5, stat.with_strong_count);
-        score += pow(2, stat.with_weak_count);
+        score += pow(1.5, stat.with_strong_multiplier);
+        score += pow(2, stat.with_weak_multiplier);
 
         for (const auto &partner_it : stat.partner_count)
         {
@@ -295,9 +295,9 @@ int score_players(const std::vector<Row> &games)
     return score;
 }
 
-int score_games(const std::vector<Row> &games)
+score_t score_games(const std::vector<Row> &games)
 {
-    int score = 0;
+    score_t score = 0;
 
     for (const auto &row : games)
     {
@@ -389,8 +389,8 @@ void swap(std::vector<Row> &games, int index1, int index2)
 
 bool hill_climb_best_among_all(std::vector<Row> &games, int total_length)
 {
-    int original_score = score_games(games);
-    int best_score = original_score;
+    score_t original_score = score_games(games);
+    score_t best_score = original_score;
     int best_index1 = 0;
     int best_index2 = 0;
 
@@ -400,7 +400,7 @@ bool hill_climb_best_among_all(std::vector<Row> &games, int total_length)
         {
             swap(games, index1, index2);
 
-            int swapped_score = score_games(games);
+            score_t swapped_score = score_games(games);
             if (swapped_score < best_score)
             {
                 best_score = swapped_score;
@@ -424,8 +424,8 @@ bool hill_climb_best_among_all(std::vector<Row> &games, int total_length)
 
 bool hill_climb_best_among_random(std::vector<Row> &games, int total_length, int iterations)
 {
-    int original_score = score_games(games);
-    int best_score = original_score;
+    score_t original_score = score_games(games);
+    score_t best_score = original_score;
     int best_index1 = 0;
     int best_index2 = 0;
 
@@ -437,7 +437,7 @@ bool hill_climb_best_among_random(std::vector<Row> &games, int total_length, int
 
         swap(games, index1, index2);
 
-        int swapped_score = score_games(games);
+        score_t swapped_score = score_games(games);
         if (swapped_score < best_score)
         {
             best_score = swapped_score;
