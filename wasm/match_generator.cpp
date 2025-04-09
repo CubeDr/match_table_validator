@@ -54,8 +54,7 @@ typedef unsigned long long score_t;
 
 struct PlayerGameStats
 {
-    int with_weak_multiplier;
-    int with_strong_multiplier;
+    int with_weak_count;
     std::unordered_map<std::string, int> partner_count;
     std::unordered_map<std::string, int> players_in_same_game_count;
 };
@@ -239,13 +238,9 @@ score_t score_players(const std::vector<Row> &games)
                 {
                     // Competing game
                 }
-                else if (player.level < average_level)
+                else if (player.level > average_level)
                 {
-                    player_stats.with_strong_multiplier++;
-                }
-                else
-                {
-                    player_stats.with_weak_multiplier += round(player.level - average_level);
+                    player_stats.with_weak_count++;
                 }
 
                 // Score duplicate partners.
@@ -279,16 +274,15 @@ score_t score_players(const std::vector<Row> &games)
     for (const auto &it : stats)
     {
         const auto &stat = it.second;
-        score += pow(1.5, stat.with_strong_multiplier);
-        score += pow(2, stat.with_weak_multiplier);
+        score += pow(20, stat.with_weak_count);
 
         for (const auto &partner_it : stat.partner_count)
         {
-            score += pow(3, partner_it.second - 1);
+            score += pow(5, partner_it.second - 1);
         }
         for (const auto &other_it : stat.players_in_same_game_count)
         {
-            score += pow(1.5, other_it.second - 1);
+            score += pow(3, other_it.second - 1);
         }
     }
 
