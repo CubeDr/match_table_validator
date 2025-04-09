@@ -1,0 +1,8 @@
+.PlayerInput {
+    margin: 8px 0;
+}
+
+.PlayerInput input, .PlayerInput select {
+    font-size: 16px;
+    margin: 0 2px;
+}
