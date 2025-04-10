@@ -13,5 +13,8 @@ emcc wasm/*.cpp \
 -s ALLOW_MEMORY_GROWTH=1 \
 --bind \
 -O3 \
--s ENVIRONMENT=web
+-s ENVIRONMENT=web,worker \
+-pthread \
+-s ASSERTIONS \
+-s PTHREAD_POOL_SIZE=8
 ```

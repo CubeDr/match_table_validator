@@ -1,8 +1,12 @@
 #include "generate.h"
 
 #include <algorithm>
+#include <atomic>
+#include <mutex>
+#include <numeric>
 #include <random>
 #include <sstream>
+#include <thread>
 #include <vector>
 #include "score.h"
 #include "types.h"
@@ -91,6 +95,121 @@ void swap(std::vector<Row> &games, int index1, int index2)
     player2 = temp;
 }
 
+struct ThreadResult
+{
+    score_t best_score = std::numeric_limits<score_t>::max();
+    int best_index1 = -1;
+    int best_index2 = -1;
+};
+
+void find_best_swap_for_range(
+    const std::vector<Row> &original_games,
+    int start_index1,
+    int end_index1,
+    int total_length,
+    ThreadResult &result)
+{
+    std::vector<Row> local_games = original_games;
+    score_t local_best_score = std::numeric_limits<score_t>::max();
+    int local_best_index1 = -1;
+    int local_best_index2 = -1;
+
+    for (int index1 = start_index1; index1 < end_index1; ++index1)
+    {
+        for (int index2 = index1 + 1; index2 < total_length; ++index2)
+        {
+            swap(local_games, index1, index2);
+            score_t swapped_score = score_games(local_games);
+
+            if (swapped_score < local_best_score)
+            {
+                local_best_score = swapped_score;
+                local_best_index1 = index1;
+                local_best_index2 = index2;
+            }
+
+            swap(local_games, index1, index2);
+        }
+    }
+
+    result.best_score = local_best_score;
+    result.best_index1 = local_best_index1;
+    result.best_index2 = local_best_index2;
+}
+
+size_t get_number_of_threads()
+{
+    size_t num_threads = std::thread::hardware_concurrency();
+
+    if (num_threads == 0)
+    {
+        return 1;
+    }
+
+    return 8;
+}
+
+bool parallel_hill_climb_best_among_all(std::vector<Row> &games, int num_threads, int total_length)
+{
+    score_t original_score = score_games(games);
+
+    std::vector<std::thread> threads;
+    std::vector<ThreadResult> results(num_threads);
+
+    int range_size = total_length / num_threads;
+    int remainder = total_length % num_threads;
+    int current_start_index = 0;
+
+    for (unsigned int i = 0; i < num_threads; ++i)
+    {
+        int current_end_index = current_start_index + range_size + (i < remainder ? 1 : 0);
+        current_end_index = std::min(current_end_index, total_length);
+
+        if (current_start_index < current_end_index)
+        {
+            threads.emplace_back(
+                find_best_swap_for_range,
+                std::cref(games),
+                current_start_index,
+                current_end_index,
+                total_length,
+                std::ref(results[i]));
+        }
+        current_start_index = current_end_index;
+    }
+
+    for (auto &t : threads)
+    {
+        if (t.joinable())
+        {
+            t.join();
+        }
+    }
+
+    score_t overall_best_score = original_score;
+    int overall_best_index1 = -1;
+    int overall_best_index2 = -1;
+
+    for (const auto &result : results)
+    {
+        if (result.best_score < overall_best_score)
+        {
+            overall_best_score = result.best_score;
+            overall_best_index1 = result.best_index1;
+            overall_best_index2 = result.best_index2;
+        }
+    }
+
+    if (overall_best_score >= original_score || overall_best_index1 == -1)
+    {
+        return false;
+    }
+
+    std::cout << "Climbing to the next best game: " << overall_best_score << std::endl;
+    swap(games, overall_best_index1, overall_best_index2);
+    return true;
+}
+
 bool hill_climb_best_among_all(std::vector<Row> &games, int total_length)
 {
     score_t original_score = score_games(games);
@@ -128,8 +247,13 @@ bool hill_climb_best_among_all(std::vector<Row> &games, int total_length)
 
 void hill_climb(std::vector<Row> &games, int total_length, int max_iterations)
 {
+    size_t num_threads = get_number_of_threads();
     for (int iteration = 0; iteration < max_iterations; ++iteration)
     {
+        // if (!parallel_hill_climb_best_among_all(games, num_threads, total_length))
+        // {
+        //     break;
+        // }
         if (!hill_climb_best_among_all(games, total_length))
         {
             break;
