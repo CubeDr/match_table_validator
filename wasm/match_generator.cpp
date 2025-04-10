@@ -229,7 +229,7 @@ score_t score_players(const std::vector<Row> &games)
                 const auto &player = game[i];
                 if (stats.find(player.name) == stats.end())
                 {
-                    stats.insert({player.name, {0, 0, {}}});
+                    stats.insert({player.name, {0, {}, {}}});
                 }
                 auto &player_stats = stats[player.name];
 
