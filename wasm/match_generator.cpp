@@ -9,24 +9,24 @@
 #include "types.h"
 #include "generate.h"
 
-void print_games(const std::vector<Row> &games)
-{
-    std::cout << "< score: " << score_games(games) << " >" << std::endl;
-    for (const auto &row : games)
-    {
-        std::cout << "[ ";
-        for (const auto &game : row)
-        {
-            std::cout << "[ ";
-            for (const auto &player : game)
-            {
-                std::cout << player << " ";
-            }
-            std::cout << "] ";
-        }
-        std::cout << "]" << std::endl;
-    }
-}
+// void print_games(const std::vector<Row> &games)
+// {
+//     // std::cout << "< score: " << score_games(games) << " >" << std::endl;
+//     for (const auto &row : games)
+//     {
+//         std::cout << "[ ";
+//         for (const auto &game : row)
+//         {
+//             std::cout << "[ ";
+//             for (const auto &player : game)
+//             {
+//                 std::cout << player << " ";
+//             }
+//             std::cout << "] ";
+//         }
+//         std::cout << "]" << std::endl;
+//     }
+// }
 
 std::string generate_matches_val(
     emscripten::val teams_val,
@@ -54,8 +54,9 @@ std::string generate_matches_val(
         return "{ \"status\": \"error\", \"message\": \"C++ data processing failed (unknown exception)\" }";
     }
 
-    std::vector<Row> games = generate_matches(teams, num_courts, num_games);
-    std::cout << "Final Score: " << score_games(games) << std::endl;
+    MatchTable match_table = generate_match_table(teams, num_courts, num_games);
+    const auto &games = match_table.table();
+    std::cout << "Final Score: " << score_games(match_table) << std::endl;
 
     std::string games_json = to_string(games);
     return "{ \"status\": \"success\", \"result\": " + games_json + " }";

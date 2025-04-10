@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <emscripten/val.h>
+#include "match_table.h"
 #include "types.h"
 
 void convert_teams(const emscripten::val &teams_val, std::vector<std::vector<Player>> &teams);

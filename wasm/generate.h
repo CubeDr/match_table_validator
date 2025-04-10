@@ -3,7 +3,8 @@
 
 #include <vector>
 #include "types.h"
+#include "match_table.h"
 
-std::vector<Row> generate_matches(const std::vector<Team> teams, int num_courts, int num_games);
+MatchTable generate_match_table(const std::vector<Team> teams, int num_courts, int num_games);
 
 #endif

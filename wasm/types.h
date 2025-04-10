@@ -26,8 +26,6 @@ struct Player
 };
 
 typedef std::vector<Player> Team;
-typedef std::vector<Player> Game;
-typedef std::vector<Game> Row;
 typedef unsigned long long score_t;
 
 struct PlayerGameStats

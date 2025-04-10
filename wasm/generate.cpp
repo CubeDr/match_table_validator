@@ -11,90 +11,6 @@
 #include "score.h"
 #include "types.h"
 
-std::random_device rd;
-std::mt19937 gen(rd());
-
-template <typename T>
-std::vector<T> flatten(std::vector<std::vector<T>> vector)
-{
-    std::vector<T> result;
-    for (auto &v : vector)
-    {
-        result.insert(result.end(), v.begin(), v.end());
-    }
-    return result;
-}
-
-void prepare_matches(std::vector<Row> &games, int num_courts, int num_games)
-{
-    games.reserve(num_games);
-    for (int i = 0; i < num_games; ++i)
-    {
-        Row row;
-        row.reserve(num_courts);
-        for (int j = 0; j < num_courts; j++)
-        {
-            row.push_back(/*game=*/{});
-        }
-        games.push_back(row);
-    }
-}
-
-void place_players_randomly(std::vector<Row> &games, const std::vector<Team> teams)
-{
-    std::vector<Player> players = flatten(teams);
-
-    std::shuffle(players.begin(), players.end(), gen);
-
-    int playerIndex = 0;
-    for (int rowIndex = 0; rowIndex < games.size(); ++rowIndex)
-    {
-        Row &row = games[rowIndex];
-        for (int gameIndex = 0; gameIndex < row.size(); ++gameIndex)
-        {
-            Game &game = row[gameIndex];
-            game.clear();
-            game.reserve(4);
-            for (int i = 0; i < 4; i++)
-            {
-                game.push_back(players[playerIndex++]);
-
-                if (playerIndex == players.size())
-                {
-                    std::shuffle(players.begin(), players.end(), gen);
-                    playerIndex = 0;
-                }
-            }
-        }
-    }
-}
-
-Player &at(std::vector<Row> &games, int index)
-{
-    for (auto &row : games)
-    {
-        int playersInThisRow = row.size() * 4;
-        if (index >= playersInThisRow)
-        {
-            index -= playersInThisRow;
-            continue;
-        }
-
-        return row[index / 4][index % 4];
-    }
-    throw std::runtime_error("Invalid index passed to at().");
-}
-
-void swap(std::vector<Row> &games, int index1, int index2)
-{
-    Player &player1 = at(games, index1);
-    Player &player2 = at(games, index2);
-
-    Player temp = player1;
-    player1 = player2;
-    player2 = temp;
-}
-
 struct ThreadResult
 {
     score_t best_score = std::numeric_limits<score_t>::max();
@@ -103,13 +19,12 @@ struct ThreadResult
 };
 
 void find_best_swap_for_range(
-    const std::vector<Row> &original_games,
+    const MatchTable &match_table,
     int start_index1,
     int end_index1,
     int total_length,
     ThreadResult &result)
 {
-    std::vector<Row> local_games = original_games;
     score_t local_best_score = std::numeric_limits<score_t>::max();
     int local_best_index1 = -1;
     int local_best_index2 = -1;
@@ -118,8 +33,7 @@ void find_best_swap_for_range(
     {
         for (int index2 = index1 + 1; index2 < total_length; ++index2)
         {
-            swap(local_games, index1, index2);
-            score_t swapped_score = score_games(local_games);
+            score_t swapped_score = score_games(match_table, index1, index2);
 
             if (swapped_score < local_best_score)
             {
@@ -127,8 +41,6 @@ void find_best_swap_for_range(
                 local_best_index1 = index1;
                 local_best_index2 = index2;
             }
-
-            swap(local_games, index1, index2);
         }
     }
 
@@ -149,9 +61,9 @@ size_t get_number_of_threads()
     return 8;
 }
 
-bool parallel_hill_climb_best_among_all(std::vector<Row> &games, int num_threads, int total_length)
+bool parallel_hill_climb_best_among_all(MatchTable &match_table, int num_threads, int total_length)
 {
-    score_t original_score = score_games(games);
+    score_t original_score = score_games(match_table);
 
     std::vector<std::thread> threads;
     std::vector<ThreadResult> results(num_threads);
@@ -169,7 +81,7 @@ bool parallel_hill_climb_best_among_all(std::vector<Row> &games, int num_threads
         {
             threads.emplace_back(
                 find_best_swap_for_range,
-                std::cref(games),
+                std::cref(match_table),
                 current_start_index,
                 current_end_index,
                 total_length,
@@ -206,13 +118,13 @@ bool parallel_hill_climb_best_among_all(std::vector<Row> &games, int num_threads
     }
 
     std::cout << "Climbing to the next best game: " << overall_best_score << std::endl;
-    swap(games, overall_best_index1, overall_best_index2);
+    match_table.swap(overall_best_index1, overall_best_index2);
     return true;
 }
 
-bool hill_climb_best_among_all(std::vector<Row> &games, int total_length)
+bool hill_climb_best_among_all(MatchTable &match_table, int total_length)
 {
-    score_t original_score = score_games(games);
+    score_t original_score = score_games(match_table);
     score_t best_score = original_score;
     int best_index1 = 0;
     int best_index2 = 0;
@@ -221,17 +133,13 @@ bool hill_climb_best_among_all(std::vector<Row> &games, int total_length)
     {
         for (int index2 = index1 + 1; index2 < total_length; ++index2)
         {
-            swap(games, index1, index2);
-
-            score_t swapped_score = score_games(games);
+            score_t swapped_score = score_games(match_table, index1, index2);
             if (swapped_score < best_score)
             {
                 best_score = swapped_score;
                 best_index1 = index1;
                 best_index2 = index2;
             }
-
-            swap(games, index1, index2);
         }
     }
 
@@ -240,36 +148,32 @@ bool hill_climb_best_among_all(std::vector<Row> &games, int total_length)
         return false;
     }
 
-    std::cout << "Climbing to the next best game: " << best_score << std::endl;
-    swap(games, best_index1, best_index2);
+    std::cout << "Swapping " << best_index1 << " and " << best_index2 << " => score: " << best_score << std::endl;
+    match_table.swap(best_index1, best_index2);
     return true;
 }
 
-void hill_climb(std::vector<Row> &games, int total_length, int max_iterations)
+void hill_climb(MatchTable &match_table, int total_length, int max_iterations)
 {
     size_t num_threads = get_number_of_threads();
     for (int iteration = 0; iteration < max_iterations; ++iteration)
     {
-        // if (!parallel_hill_climb_best_among_all(games, num_threads, total_length))
+        // if (!parallel_hill_climb_best_among_all(match_table, num_threads, total_length))
         // {
         //     break;
         // }
-        if (!hill_climb_best_among_all(games, total_length))
+        if (!hill_climb_best_among_all(match_table, total_length))
         {
             break;
         }
     }
 }
 
-std::vector<Row> generate_matches(const std::vector<Team> teams, int num_courts, int num_games)
+MatchTable generate_match_table(const std::vector<Team> teams, int num_courts, int num_games)
 {
-    std::vector<Row> games;
-    prepare_matches(games, num_courts, num_games);
+    MatchTable match_table(num_courts, num_games, teams);
 
-    place_players_randomly(games, teams);
-    std::cout << "Initial score: " << score_games(games) << std::endl;
+    hill_climb(match_table, num_courts * num_games * 4, 60);
 
-    hill_climb(games, num_courts * num_games * 4, 60);
-
-    return games;
+    return match_table;
 }

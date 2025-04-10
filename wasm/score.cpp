@@ -5,83 +5,124 @@
 #include <vector>
 #include "types.h"
 
-template <typename T>
-std::vector<T> flatten(std::vector<std::vector<T>> vector)
+class SwappedMatchTable
 {
-    std::vector<T> result;
-    for (auto &v : vector)
+public:
+    SwappedMatchTable(const MatchTable &match_table, int index_1, int index_2)
+        : match_table(match_table), index_1(index_1), index_2(index_2) {}
+
+    const Player &at(int row, int court, int index) const
     {
-        result.insert(result.end(), v.begin(), v.end());
+        return at((row * courts() + court) * 4 + index);
     }
-    return result;
-}
 
-score_t score_level_balance(const Game &game)
+    const Player &at(int player_index) const
+    {
+        return match_table.at(swapped_index(player_index));
+    }
+
+    int rows() const
+    {
+        return match_table.rows();
+    }
+
+    int courts() const
+    {
+        return match_table.courts();
+    }
+
+private:
+    const MatchTable &match_table;
+    const int index_1;
+    const int index_2;
+
+    int swapped_index(int index) const
+    {
+        if (index == index_1)
+        {
+            return index_2;
+        }
+        else if (index == index_2)
+        {
+            return index_1;
+        }
+        else
+        {
+            return index;
+        }
+    }
+};
+
+score_t score_level_balance(const SwappedMatchTable &match_table, int row, int court)
 {
-    int team1Level = game[0].level + game[1].level;
-    int team2Level = game[2].level + game[3].level;
-    return std::abs(team1Level - team2Level) * 20ull;
+    int team1 = match_table.at(row, court, 0).level + match_table.at(row, court, 1).level;
+    int team2 = match_table.at(row, court, 2).level + match_table.at(row, court, 3).level;
+    return std::abs(team1 - team2) * 20ull;
 }
 
-score_t score_duplicate_player(const std::vector<Player> &players)
+score_t score_duplicate_player(const SwappedMatchTable &match_table, int player_index_start, int player_index_end)
 {
     std::unordered_set<std::string> names;
-    for (const auto &player : players)
+    for (int i = player_index_start; i < player_index_end; ++i)
     {
-        names.insert(player.name);
+        names.insert(match_table.at(i).name);
     }
-    if (names.size() != players.size())
-    {
-        return 100000000000000ull * (players.size() - names.size());
-    }
-    return 0;
+
+    int expected_size = player_index_end - player_index_start;
+    return 100000000000000ull * (expected_size - names.size());
 }
 
-score_t score_group_mixing(const Game &game)
+score_t score_group_mixing(const SwappedMatchTable &match_table, int row, int court)
 {
-    score_t penalty = 0;
+    score_t score = 0;
 
-    std::unordered_map<int, int> groupCounts;
-    for (const auto &player : game)
+    std::unordered_map<int, int> group_counts;
+    for (int i = 0; i < 4; i++)
     {
-        groupCounts[player.group_id]++;
+        group_counts[match_table.at(row, court, i).group_id]++;
     }
 
-    for (const auto &pair : groupCounts)
+    for (const auto &pair : group_counts)
     {
         int count = pair.second;
         if (count == 4)
         {
-            penalty += 1000;
+            score += 1000;
         }
         else if (count == 3)
         {
-            penalty += 200;
+            score += 200;
         }
     }
-    return penalty;
+    return score;
 }
 
-score_t score_game(const Game &game)
+score_t score_game(const SwappedMatchTable &match_table, int row, int court)
 {
-    score_t balance_score = score_level_balance(game);
-    score_t duplicate_player_score = score_duplicate_player(game);
-    score_t group_mixing_penalty = score_group_mixing(game);
-    return balance_score + duplicate_player_score + group_mixing_penalty;
+    score_t balance_score = score_level_balance(match_table, row, court);
+
+    int player_start_index = (row * match_table.courts() + court) * 4;
+    int player_end_index = (row * match_table.courts() + court + 1) * 4;
+    score_t duplicate_player_score = score_duplicate_player(match_table, player_start_index, player_end_index);
+
+    score_t group_mixing_score = score_group_mixing(match_table, row, court);
+
+    return balance_score + duplicate_player_score + group_mixing_score;
 }
 
-score_t score_rows(const Row &row)
+score_t score_rows(const SwappedMatchTable &match_table, int row)
 {
-    score_t duplicate_player_score = score_duplicate_player(flatten(row));
+    int players_in_row = match_table.courts() * 4;
+    score_t duplicate_player_score = score_duplicate_player(match_table, row * players_in_row, (row + 1) * players_in_row);
     return duplicate_player_score;
 }
 
-float get_average_level(const Game &game)
+float get_average_level(const SwappedMatchTable &match_table, int row, int court)
 {
     float average_level = 0;
-    for (const auto &player : game)
+    for (int i = 0; i < 4; i++)
     {
-        average_level += player.level;
+        average_level += match_table.at(row, court, i).level;
     }
     average_level /= 4;
     return average_level;
@@ -89,54 +130,39 @@ float get_average_level(const Game &game)
 
 const float COMPETE_LEVEL_THRESHOLD = 2;
 
-score_t score_players(const std::vector<Row> &games)
+score_t score_players(const SwappedMatchTable &match_table)
 {
     std::unordered_map<std::string, PlayerGameStats> stats;
 
-    for (const auto &row : games)
+    for (int row = 0; row < match_table.rows(); ++row)
     {
-        for (const auto &game : row)
+        for (int court = 0; court < match_table.courts(); ++court)
         {
-            float average_level = get_average_level(game);
-            for (int i = 0; i < game.size(); i++)
+
+            float average_level = get_average_level(match_table, row, court);
+            for (int i = 0; i < 4; ++i)
             {
-                const auto &player = game[i];
-                if (stats.find(player.name) == stats.end())
-                {
-                    stats.insert({player.name, {0, {}, {}}});
-                }
+                const auto &player = match_table.at(row, court, i);
                 auto &player_stats = stats[player.name];
 
                 // Score game level difficulty.
-                if (std::abs(player.level - average_level) <= COMPETE_LEVEL_THRESHOLD)
-                {
-                    // Competing game
-                }
-                else if (player.level > average_level)
+                if (player.level >= average_level + COMPETE_LEVEL_THRESHOLD)
                 {
                     player_stats.with_weak_count++;
                 }
 
                 // Score duplicate partners.
-                const auto &partner = game[(i / 2) * 2 + (1 - (i % 2))];
-                if (player_stats.partner_count.find(partner.name) == player_stats.partner_count.end())
-                {
-                    player_stats.partner_count.insert({});
-                }
+                const auto &partner = match_table.at(row, court, (i / 2) * 2 + (1 - (i % 2)));
                 player_stats.partner_count[partner.name]++;
 
                 // Score duplicate players in same game.
-                for (int j = 0; j < game.size(); ++j)
+                for (int j = 0; j < 4; ++j)
                 {
                     if (i == j)
                     {
                         continue;
                     }
-                    const auto &other = game[j];
-                    if (player_stats.players_in_same_game_count.find(other.name) == player_stats.players_in_same_game_count.end())
-                    {
-                        player_stats.players_in_same_game_count.insert({});
-                    }
+                    const auto &other = match_table.at(row, court, j);
                     player_stats.players_in_same_game_count[other.name]++;
                 }
             }
@@ -163,20 +189,23 @@ score_t score_players(const std::vector<Row> &games)
     return score;
 }
 
-score_t score_games(const std::vector<Row> &games)
+score_t score_games(const MatchTable &match_table, int swap_player_index1, int swap_player_index2)
 {
+    SwappedMatchTable swapped_match_table(match_table, swap_player_index1, swap_player_index2);
+
     score_t score = 0;
 
-    for (const auto &row : games)
+    for (int row = 0; row < swapped_match_table.rows(); ++row)
     {
-        score += score_rows(row);
-        for (const auto &game : row)
+        score += score_rows(swapped_match_table, row);
+
+        for (int court = 0; court < swapped_match_table.courts(); ++court)
         {
-            score += score_game(game);
+            score += score_game(swapped_match_table, row, court);
         }
     }
 
-    score += score_players(games);
+    score += score_players(swapped_match_table);
 
     return score;
 }
