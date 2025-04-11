@@ -15,14 +15,13 @@ export default function AutoPage() {
     const [courts, setCourts] = useState(2);
     const [games, setGames] = useState(4);
     const [tables, setTables] = useState<Table[]>([]);
-    const [isGenerating, setIsGenerating] = useState(false);
+    const [generatingCount, setGeneratingCount] = useState(0);
     const [workerError, setWorkerError] = useState<string | null>(null);
     const workersRef = useRef<Worker[]>([]);
     const workerSetupStatusRef = useRef<Array<{ id: number; ready: boolean; error: string | null }>>(
         Array(NUM_WORKERS).fill(null).map((_, i) => ({ id: i, ready: false, error: null }))
     );
     const [isAnyWorkerReady, setIsAnyWorkerReady] = useState(false);
-
 
     useEffect(() => {
         console.log("Main: Initializing workers...");
@@ -58,12 +57,12 @@ export default function AutoPage() {
                             statusWithError.error = `Worker ${workerId}: Failed to load Wasm module: ${payload}`;
                         }
                         setWorkerError(prevError => prevError ?? `Worker ${workerId}: Failed to load Wasm module: ${payload}`);
-                        setIsGenerating(false);
+                        setGeneratingCount((count) => count - 1);
                         break;
                     case 'GENERATION_SUCCESS':
                         console.log(`Main (Worker ${workerId}): Generation successful.`);
                         setTables((prevTables) => [...prevTables, payload]);
-                        setIsGenerating(false);
+                        setGeneratingCount((count) => count - 1);
                         setWorkerError(prevError =>
                             prevError?.startsWith('Generation Error:') ? null : prevError
                         );
@@ -71,7 +70,7 @@ export default function AutoPage() {
                     case 'GENERATION_ERROR':
                         console.error(`Main (Worker ${workerId}): Generation failed:`, payload);
                         setWorkerError(`Worker ${workerId} Error: ${payload}`);
-                        setIsGenerating(false);
+                        setGeneratingCount((count) => count - 1);
                         break;
                     default:
                         console.warn(`Main (Worker ${workerId}): Received unknown message type:`, type);
@@ -87,7 +86,7 @@ export default function AutoPage() {
                     statusWithError.error = errorMessage;
                 }
                 setWorkerError(prevError => prevError ?? errorMessage);
-                setIsGenerating(false);
+                setGeneratingCount((count) => count - 1);
             };
         }
 
@@ -144,7 +143,7 @@ export default function AutoPage() {
             return;
         }
 
-        if (isGenerating) {
+        if (generatingCount > 0) {
             console.log("Generation already in progress.");
             return;
         }
@@ -163,7 +162,7 @@ export default function AutoPage() {
 
 
         console.log(`Main: Sending GENERATE_MATCHES message to ${NUM_WORKERS} workers.`);
-        setIsGenerating(true);
+        setGeneratingCount(NUM_WORKERS);
         setWorkerError(null);
 
         const payload = {
@@ -179,9 +178,9 @@ export default function AutoPage() {
                 payload: payload
             });
         });
-    }, [players, courts, games, isGenerating, isAnyWorkerReady]);
+    }, [players, courts, games, generatingCount, isAnyWorkerReady]);
 
-    const isGenerateDisabled = isGenerating ||
+    const isGenerateDisabled = generatingCount > 0 ||
         !isAnyWorkerReady ||
         !!workerSetupStatusRef.current.find(status => status.error && (status.error.includes('Wasm') || status.error.includes('script error')));
 
@@ -214,7 +213,7 @@ export default function AutoPage() {
                     type='number'
                     value={courts}
                     onChange={(e) => setCourts(Number(e.target.value))}
-                    disabled={isGenerating}
+                    disabled={generatingCount > 0}
                 />
                 <label>Number of games: </label>
                 <input
@@ -222,14 +221,14 @@ export default function AutoPage() {
                     type='number'
                     value={games}
                     onChange={(e) => setGames(Number(e.target.value))}
-                    disabled={isGenerating}
+                    disabled={generatingCount > 0}
                 />
                 <button
                     className={styles.GenerateButton}
                     onClick={handleGenerate}
                     disabled={isGenerateDisabled}
                 >
-                    {isGenerating ? 'Generating...' : (isGenerateDisabled && !isAnyWorkerReady) ? 'Initializing...' : 'Generate'}
+                    {generatingCount > 0 ? `Generating ${generatingCount} tables...` : (isGenerateDisabled && !isAnyWorkerReady) ? 'Initializing...' : `Generate ${NUM_WORKERS} tables`}
                 </button>
             </div>
             {workerError && <p style={{ color: 'red' }}>Error: {workerError}</p>}
