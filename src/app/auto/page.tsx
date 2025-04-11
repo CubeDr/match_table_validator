@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import styles from './page.module.css';
 import { Gender, Player } from './player';
 import PlayerInput from './PlayerInput';
@@ -8,41 +8,60 @@ import MatchTable from './MatchTable';
 
 export type Table = string[][][];
 
-interface MatchGeneratorModule {
-    generateMatches: (
-        players: Player[][],
-        courts: number,
-        games: number
-    ) => string;
-}
-
 export default function AutoPage() {
     const [players, setPlayers] = useState<Player[][]>([[{ name: '', level: 1, gender: Gender.MALE }]]);
     const [courts, setCourts] = useState(2);
     const [games, setGames] = useState(4);
-
-    const [wasmModule, setWasmModule] = useState<MatchGeneratorModule | null>(null);
-    const [isLoadingWasm, setIsLoadingWasm] = useState(true);
     const [tables, setTables] = useState<Table[]>([]);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [workerError, setWorkerError] = useState<string | null>(null);
+
+    const workerRef = useRef<Worker | null>(null);
 
     useEffect(() => {
-        const loadWasm = async () => {
-            try {
-                setIsLoadingWasm(true);
-                const moduleFactory = (await import('../../../public/wasm/match_generator.js')).default;
+        workerRef.current = new Worker('/match.worker.js');
 
-                const instance = await moduleFactory();
-                setWasmModule(instance as MatchGeneratorModule);
-                console.log("Wasm module loaded successfully.");
+        workerRef.current.onmessage = (event: MessageEvent<{ type: string, payload: any }>) => {
+            const { type, payload } = event.data;
+            console.log("Main: Received message from worker:", type);
 
-            } catch (err) {
-                console.error("Error loading Wasm module:", err);
-            } finally {
-                setIsLoadingWasm(false);
+            switch (type) {
+                case 'WORKER_READY':
+                    console.log("Main: Worker is ready and Wasm loaded.");
+                    setWorkerError(null);
+                    break;
+                case 'WASM_LOAD_ERROR':
+                    console.error("Main: Worker failed to load Wasm:", payload);
+                    setWorkerError(`Failed to load Wasm module: ${payload}`);
+                    setIsGenerating(false);
+                    break;
+                case 'GENERATION_SUCCESS':
+                    console.log("Main: Generation successful.");
+                    setTables((prevTables) => [...prevTables, payload]);
+                    setIsGenerating(false);
+                    setWorkerError(null);
+                    break;
+                case 'GENERATION_ERROR':
+                    console.error("Main: Generation failed:", payload);
+                    setWorkerError(`Generation Error: ${payload}`);
+                    setIsGenerating(false);
+                    break;
+                default:
+                    console.warn("Main: Received unknown message type from worker:", type);
             }
         };
 
-        loadWasm();
+        workerRef.current.onerror = (error) => {
+            console.error("Main: Worker error:", error);
+            setWorkerError(`Worker script error: ${error.message}`);
+            setIsGenerating(false);
+        };
+
+        return () => {
+            console.log("Main: Terminating worker.");
+            workerRef.current?.terminate();
+            workerRef.current = null;
+        };
     }, []);
 
     function addPlayer(teamIndex: number) {
@@ -70,34 +89,42 @@ export default function AutoPage() {
     function paste() {
         const input = window.prompt('json');
         if (input == null) return;
-        setPlayers(JSON.parse(input));
+        try {
+            setPlayers(JSON.parse(input));
+        } catch (e) {
+            console.error("Failed to parse pasted JSON:", e);
+            alert("Invalid JSON pasted.");
+        }
     }
 
-    function handleGenerate() {
-        if (!wasmModule) {
-            console.error("Wasm module not loaded yet.");
+    const handleGenerate = useCallback(() => {
+        if (!workerRef.current) {
+            console.error("Worker not initialized yet.");
+            setWorkerError("Match generator is not ready. Please try again later.");
             return;
         }
-        if (isLoadingWasm) {
-            console.log("Wasm module is still loading.");
-            return; // Or show feedback
+        if (isGenerating) {
+            console.log("Generation already in progress.");
+            return;
+        }
+        if (workerError && workerError.includes("Wasm module")) {
+            console.error("Cannot generate, Wasm module failed to load.");
+            return;
         }
 
-        try {
-            const startedAt = Date.now();
-            const result = JSON.parse(wasmModule.generateMatches(players, courts, games));
-            const elapsed = Date.now() - startedAt;
-            console.log('Took ' + (elapsed / 1000) + 's.');
+        console.log("Main: Sending GENERATE_MATCHES message to worker.");
+        setIsGenerating(true);
+        setWorkerError(null);
 
-            if (result.status == 'success') {
-                setTables((tables) => [...tables, result.result]);
-            } else {
-                console.error(result.message);
+        workerRef.current.postMessage({
+            type: 'GENERATE_MATCHES',
+            payload: {
+                players,
+                courts,
+                games
             }
-        } catch (err) {
-            console.error("Error calling Wasm function:", err);
-        }
-    };
+        });
+    }, [players, courts, games, isGenerating, workerError]);
 
     return (
         <div className={styles.Page}>
@@ -126,19 +153,27 @@ export default function AutoPage() {
                     className={styles.GameSettingsInput}
                     type='number'
                     value={courts}
-                    onChange={(e) => setCourts(Number(e.target.value))} />
+                    onChange={(e) => setCourts(Number(e.target.value))}
+                    disabled={isGenerating}
+                />
                 <label>Number of games: </label>
                 <input
                     className={styles.GameSettingsInput}
                     type='number'
                     value={games}
-                    onChange={(e) => setGames(Number(e.target.value))} />
+                    onChange={(e) => setGames(Number(e.target.value))}
+                    disabled={isGenerating}
+                />
                 <button
                     className={styles.GenerateButton}
-                    onClick={handleGenerate}>
-                    Generate
+                    onClick={handleGenerate}
+                    disabled={isGenerating || !!workerError}
+                >
+                    {isGenerating ? 'Generating...' : 'Generate'}
                 </button>
             </div>
+            {workerError && <p style={{ color: 'red' }}>Error: {workerError}</p>}
+
             <h2 className={styles.GeneratedTablesTitle}>Generated Tables</h2>
             {tables.map((table, i) => (
                 <MatchTable key={'table' + i} table={table} />
