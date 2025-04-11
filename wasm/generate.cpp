@@ -55,6 +55,12 @@ bool hill_climb_best_among_random(MatchTable &match_table, int total_length, int
         int index1 = distr(gen1);
         int index2 = distr(gen1);
 
+        if (index1 == index2)
+        {
+            --i;
+            continue;
+        }
+
         score_t swapped_score = score_games(match_table, index1, index2);
         if (swapped_score < best_score)
         {
@@ -74,14 +80,25 @@ bool hill_climb_best_among_random(MatchTable &match_table, int total_length, int
     return true;
 }
 
-void hill_climb(MatchTable &match_table, int total_length, int max_iterations)
+void hill_climb(MatchTable &match_table, int total_length)
 {
-    for (int iteration = 0; iteration < max_iterations; ++iteration)
+    int repeat = sqrt(total_length);
+
+    std::cout << "Start climbing fast with low precision." << std::endl;
+    for (int i = 0; i < repeat; ++i)
     {
-        // if (!hill_climb_best_among_all(match_table, total_length))
-        if (!hill_climb_best_among_random(match_table, total_length, 10000))
+        while (hill_climb_best_among_random(match_table, total_length, total_length))
         {
-            break;
+            // no-op
+        }
+    }
+
+    std::cout << "Start climbing faster with higher precision." << std::endl;
+    for (int i = 0; i < repeat; ++i)
+    {
+        while (hill_climb_best_among_random(match_table, total_length, total_length * (int)sqrt(total_length)))
+        {
+            // no-op
         }
     }
 }
@@ -90,7 +107,7 @@ MatchTable generate_match_table(const std::vector<Team> teams, int num_courts, i
 {
     MatchTable match_table(num_courts, num_games, teams);
 
-    hill_climb(match_table, num_courts * num_games * 4, 60);
+    hill_climb(match_table, num_courts * num_games * 4);
 
     return match_table;
 }
