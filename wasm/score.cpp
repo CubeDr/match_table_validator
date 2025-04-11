@@ -5,6 +5,11 @@
 #include <vector>
 #include "types.h"
 
+inline int partner_index(int i)
+{
+    return (i / 2) * 2 + (1 - (i % 2));
+}
+
 class SwappedMatchTable
 {
 public:
@@ -143,6 +148,7 @@ score_t score_players(const SwappedMatchTable &match_table)
             for (int i = 0; i < 4; ++i)
             {
                 const auto &player = match_table.at(row, court, i);
+                const auto &partner = match_table.at(row, court, partner_index(i));
                 auto &player_stats = stats[player.name];
 
                 // Score game level difficulty.
@@ -151,8 +157,12 @@ score_t score_players(const SwappedMatchTable &match_table)
                     player_stats.with_weak_count++;
                 }
 
+                if (player.level > partner.level)
+                {
+                    player_stats.with_weak_partner_level_diff_score += pow(1.3, player.level - partner.level);
+                }
+
                 // Score duplicate partners.
-                const auto &partner = match_table.at(row, court, (i / 2) * 2 + (1 - (i % 2)));
                 player_stats.partner_count[partner.name]++;
 
                 // Score duplicate players in same game.
@@ -175,6 +185,7 @@ score_t score_players(const SwappedMatchTable &match_table)
     {
         const auto &stat = it.second;
         score += pow(20, stat.with_weak_count);
+        score += stat.with_weak_partner_level_diff_score;
 
         for (const auto &partner_it : stat.partner_count)
         {

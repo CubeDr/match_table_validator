@@ -31,6 +31,7 @@ typedef unsigned long long score_t;
 struct PlayerGameStats
 {
     int with_weak_count;
+    int with_weak_partner_level_diff_score;
     std::unordered_map<std::string, int> partner_count;
     std::unordered_map<std::string, int> players_in_same_game_count;
 };
