@@ -4,9 +4,10 @@ import { Table } from './page';
 
 interface Props {
     table: Table;
+    deleteTable: () => void;
 }
 
-export default function MatchTable({ table }: Props) {
+export default function MatchTable({ table, deleteTable }: Props) {
     const [hovered, setHovered] = useState<string | null>(null);
 
     function copy() {
@@ -15,8 +16,9 @@ export default function MatchTable({ table }: Props) {
 
     return (
         <>
-            <div>
-                <button onClick={copy}>Copy</button>
+            <div className={styles.ControlRow}>
+                <button className={styles.Button} onClick={copy}>Copy</button>
+                <button className={styles.Button} onClick={deleteTable}>Delete</button>
             </div>
             <div className={styles.TableWrapper}>
                 <table className={styles.Table}>

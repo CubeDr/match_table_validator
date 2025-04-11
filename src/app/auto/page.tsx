@@ -176,7 +176,9 @@ export default function AutoPage() {
 
             <h2 className={styles.GeneratedTablesTitle}>Generated Tables</h2>
             {tables.map((table, i) => (
-                <MatchTable key={'table' + i} table={table} />
+                <MatchTable key={'table' + i} table={table} deleteTable={() => {
+                    setTables((tables) => [...tables.slice(0, i), ...tables.slice(i + 1)]);
+                }} />
             ))}
         </div>
     );

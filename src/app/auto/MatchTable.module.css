@@ -1,11 +1,20 @@
+.ControlRow {
+    margin: 32px 0 8px;
+}
+
+.Button {
+    padding: 2px 4px;
+    margin-right: 12px;
+}
+
 .TableWrapper {
     overflow-x: auto;
+    margin-bottom: 14px;
 }
 
 .Table {
     border-collapse: collapse;
     border: 2px solid var(--divider);
-    margin: 32px 0 14px;
 }
 
 .TableCell {
