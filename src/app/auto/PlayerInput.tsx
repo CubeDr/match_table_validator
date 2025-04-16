@@ -53,7 +53,7 @@ export default function PlayerInput({ player, onPlayerUpdate }: Props) {
                 value={player.level}
                 onChange={handleLevelChange}
                 min="1"
-                max="10"
+                max="20"
                 className={styles.LevelInput}
             />
             <select
