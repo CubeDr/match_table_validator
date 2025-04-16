@@ -43,7 +43,7 @@ export default function PlayerInput({ player, onPlayerUpdate }: Props) {
                 value={player.level}
                 onChange={handleLevelChange}
                 min="1"
-                max="20"
+                max={MAX_LEVEL}
                 className={styles.LevelInput}
             />
         </div>
