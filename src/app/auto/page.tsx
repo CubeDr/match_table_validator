@@ -32,7 +32,7 @@ export default function AutoPage() {
             workersRef.current.push(worker);
             const workerId = i;
 
-            worker.onmessage = (event: MessageEvent<{ type: string, payload: Table }>) => {
+            worker.onmessage = (event: MessageEvent<{ type: string, payload: any }>) => {
                 const { type, payload } = event.data;
                 console.log(`Main (Worker ${workerId}): Received message:`, type);
 

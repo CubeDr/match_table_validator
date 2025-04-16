@@ -1,5 +1,5 @@
 import React from 'react';
-import { Player, Gender } from './player';
+import { Player } from './player';
 import styles from './PlayerInputs.module.css';
 
 const MAX_LEVEL = 20;
@@ -29,16 +29,6 @@ export default function PlayerInput({ player, onPlayerUpdate }: Props) {
         }
     };
 
-    const handleGenderChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedGenderString = event.target.value;
-        const newGender = Gender[selectedGenderString as keyof typeof Gender];
-
-        if (newGender !== undefined) {
-            const updatedPlayer = { ...player, gender: newGender };
-            onPlayerUpdate(updatedPlayer);
-        }
-    };
-
     return (
         <div className={styles.PlayerInput}>
             <input
@@ -56,17 +46,6 @@ export default function PlayerInput({ player, onPlayerUpdate }: Props) {
                 max="20"
                 className={styles.LevelInput}
             />
-            <select
-                value={Gender[player.gender]}
-                onChange={handleGenderChange}
-                className={styles.GenderInput}
-            >
-                {Object.keys(Gender).filter(key => isNaN(Number(key))).map((genderKey) => (
-                    <option key={genderKey} value={genderKey}>
-                        {genderKey.charAt(0).toUpperCase() + genderKey.slice(1).toLowerCase()}
-                    </option>
-                ))}
-            </select>
         </div>
     );
 }
