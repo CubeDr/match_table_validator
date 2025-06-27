@@ -92,11 +92,11 @@ score_t score_group_mixing(const SwappedMatchTable &match_table, int row, int co
         int count = pair.second;
         if (count == 4)
         {
-            score += 1000;
+            score += 100000000000000ull;
         }
         else if (count == 3)
         {
-            score += 200;
+            score += 100000000000000ull;
         }
     }
     return score;
