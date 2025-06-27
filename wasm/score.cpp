@@ -79,27 +79,17 @@ score_t score_duplicate_player(const SwappedMatchTable &match_table, int player_
 
 score_t score_group_mixing(const SwappedMatchTable &match_table, int row, int court)
 {
-    score_t score = 0;
-
     std::unordered_map<int, int> group_counts;
-    for (int i = 0; i < 4; i++)
-    {
-        group_counts[match_table.at(row, court, i).group_id]++;
+    const auto& player1 = match_table.at(row, court, 0);
+    const auto& player2 = match_table.at(row, court, 0);
+    const auto& player3 = match_table.at(row, court, 0);
+    const auto& player4 = match_table.at(row, court, 0);
+
+    if (player1.group_id == player2.group_id || player3.group_id == player4.group_id) {
+        return 1000000000000000ull;
     }
 
-    for (const auto &pair : group_counts)
-    {
-        int count = pair.second;
-        if (count == 4)
-        {
-            score += 100000000000000ull;
-        }
-        else if (count == 3)
-        {
-            score += 100000000000000ull;
-        }
-    }
-    return score;
+    return 0;
 }
 
 score_t score_game(const SwappedMatchTable &match_table, int row, int court)
