@@ -81,9 +81,9 @@ score_t score_group_mixing(const SwappedMatchTable &match_table, int row, int co
 {
     std::unordered_map<int, int> group_counts;
     const auto& player1 = match_table.at(row, court, 0);
-    const auto& player2 = match_table.at(row, court, 0);
-    const auto& player3 = match_table.at(row, court, 0);
-    const auto& player4 = match_table.at(row, court, 0);
+    const auto& player2 = match_table.at(row, court, 1);
+    const auto& player3 = match_table.at(row, court, 2);
+    const auto& player4 = match_table.at(row, court, 3);
 
     if (player1.group_id != player2.group_id || player3.group_id != player4.group_id) {
         return 1000000000000000ull;
